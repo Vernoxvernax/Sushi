@@ -225,8 +225,10 @@ class AssScript(ScriptBase):
                         parse_function = parse_script_info_line
                     elif low == '[v4+ styles]':
                         parse_function = parse_styles_line
+                        create_generic_parse(low)
                     elif low == '[events]':
                         parse_function = parse_event_line
+                        create_generic_parse(low)
                     elif re.match(r'\[.+?\]', low):
                         parse_function = create_generic_parse(line)
                     elif not parse_function:
@@ -248,24 +250,24 @@ class AssScript(ScriptBase):
             lines.append('[Script Info]')
             lines.extend(self.script_info)
             lines.append('')
-
-        if self.styles:
-            lines.append('[V4+ Styles]')
-            lines.append('Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding')
-            lines.extend(self.styles)
-            lines.append('')
-
-        if self.events:
-            events = sorted(self.events, key=lambda x: x.source_index)
-            lines.append('[Events]')
-            lines.append('Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text')
-            lines.extend(map(str, events))
-
+        
         if self.other:
             for section_name, section_lines in self.other.items():
-                lines.append('')
-                lines.append(section_name)
-                lines.extend(section_lines)
+                if section_name == "[events]":
+                    events = sorted(self.events, key=lambda x: x.source_index)
+                    lines.append('[Events]')
+                    lines.append('Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text')
+                    lines.extend(map(str, events))
+                    lines.append('')
+                elif section_name == "[v4+ styles]":
+                    lines.append('[V4+ Styles]')
+                    lines.append('Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding')
+                    lines.extend(self.styles)
+                    lines.append('')
+                else:
+                    lines.append(section_name)
+                    lines.extend(section_lines)
+                    lines.append('')
 
         with codecs.open(path, encoding='utf-8-sig', mode='w') as script:
             script.write(str(os.linesep).join(lines))
